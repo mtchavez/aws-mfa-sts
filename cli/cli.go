@@ -90,7 +90,8 @@ func (cli *App) addProfileWithCreds(creds *sts.GetSessionTokenOutput) error {
 	awsCreds.Section(tokenProfile).Key("aws_session_token").SetValue(*creds.Credentials.SessionToken)
 	awsCreds.SaveTo(awsCredsPath())
 	fmt.Printf("Adding credentials for %s to %s\n", tokenProfile, awsCredsPath())
-	fmt.Printf("Use with --profile=%s or export AWS_DEFAULT_PROFILE=%s\n", tokenProfile, tokenProfile)
+	fmt.Printf("Use with the awscli by passing --profile=%s \n\n", tokenProfile)
+	fmt.Printf("or set up your environment with \n\nexport AWS_DEFAULT_PROFILE=%s\nexport AWS_PROFILE=%s\n", tokenProfile, tokenProfile)
 	return nil
 }
 

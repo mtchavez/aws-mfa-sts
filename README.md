@@ -40,7 +40,7 @@ Use with --profile=default-sts or export AWS_DEFAULT_PROFILE=default-sts
 Once a new STS profile is generated you can use the `awscli` by passing
 the profile in to commands:
 
-`aws --profile s3 ls`
+`aws --profile=default-sts s3 ls`
 
 Or you can configure your environment `AWS_DEFAULT_PROFILE=default-sts` and
 call things as normal `aws s3 ls`
