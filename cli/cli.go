@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"errors"
+	"flag"
 	"fmt"
+	"os"
 	"os/user"
 	"path/filepath"
 
@@ -12,6 +15,9 @@ import (
 	ini "github.com/go-ini/ini"
 )
 
+// DefaultDuration is the default duration for a token to be valid (1hr) in seconds
+const DefaultDuration int64 = 3600
+
 // App handles the input from the CLI and encapsulates
 // the processing of requests to grant access for an MFA user
 // to AWS with temporary STS credentials
@@ -20,40 +26,53 @@ type App struct {
 	token     string
 	region    string
 	deviceArn string
+	duration  int64
 	ses       *session.Session
 }
 
+// InputArgs takes in flag inputs from the command line to be passed into
+// a NewApp to create the App with user specificed inputs
+type InputArgs struct {
+	Profile   string
+	Token     string
+	Region    string
+	DeviceArn string
+	Duration  int64
+}
+
 // NewApp creates a new app from command line flags
-func NewApp(profile, token, region, deviceArn string) *App {
+func NewApp(input *InputArgs) *App {
 	ses := session.Must(
 		session.NewSessionWithOptions(
 			session.Options{
-				Config:  aws.Config{Region: aws.String(region)},
-				Profile: profile,
+				Config:  aws.Config{Region: aws.String(input.Region)},
+				Profile: input.Profile,
 			},
 		),
 	)
 	return &App{
-		profile:   profile,
-		token:     token,
-		region:    region,
-		deviceArn: deviceArn,
+		profile:   input.Profile,
+		token:     input.Token,
+		region:    input.Region,
+		deviceArn: input.DeviceArn,
+		duration:  input.Duration,
 		ses:       ses,
 	}
 }
 
 // SetupUser generates a STS token and updates credentials
 func (cli *App) SetupUser() error {
-	tokenOutput := cli.generateSTSCreds()
-	cli.addProfileWithCreds(tokenOutput)
-	return nil
+	if tokenOutput := cli.generateSTSCreds(); tokenOutput != nil {
+		return cli.addProfileWithCreds(tokenOutput)
+	}
+	return errors.New("Unable to generate a token with provided credentials")
 }
 
 func (cli *App) generateSTSCreds() *sts.GetSessionTokenOutput {
 	fmt.Printf("Generating STS Token for %s profile\n", cli.profile)
 	svc := sts.New(cli.ses)
 	input := &sts.GetSessionTokenInput{
-		DurationSeconds: aws.Int64(3600),
+		DurationSeconds: aws.Int64(cli.duration),
 		SerialNumber:    aws.String(cli.deviceArn),
 		TokenCode:       aws.String(cli.token),
 	}
@@ -106,4 +125,23 @@ func awsCredsPath() string {
 func parseAwsCreds() (*ini.File, error) {
 	creds, err := ini.Load(awsCredsPath())
 	return creds, err
+}
+
+// ValidateFields will check that required fields are passed in from input
+// and ensure the duration is in the valid range
+func (inputs *InputArgs) ValidateFields() {
+	if inputs.Token == "" || len(inputs.Token) < 6 {
+		fmt.Println("Token required and must be at least 6 digits\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+	if inputs.DeviceArn == "" {
+		fmt.Println("MFA Device ARN required. Please go to your IAM user and copy.\n")
+		flag.Usage()
+		os.Exit(1)
+	}
+	if inputs.Duration < 900 || inputs.Duration > 86400 {
+		inputs.Duration = DefaultDuration
+		fmt.Printf("Invalid duration %d; setting to default of 1hr\n", inputs.Duration)
+	}
 }

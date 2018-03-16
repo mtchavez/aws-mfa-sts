@@ -2,8 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"os"
 
 	"github.com/mtchavez/aws-mfa-sts/cli"
 )
@@ -13,17 +11,18 @@ func main() {
 	token := flag.String("token", "", "MFA token")
 	region := flag.String("region", "us-east-1", "AWS Region")
 	deviceArn := flag.String("device-arn", "", "MFA Serial Number")
+	duration := flag.Int64("duration", cli.DefaultDuration, "Time in seconds the token is valid for (max 24 hours e.g. 86400)")
 	flag.Parse()
-	if *token == "" {
-		fmt.Println("Token required")
-		flag.Usage()
-		os.Exit(1)
+
+	inputArgs := &cli.InputArgs{
+		Profile:   *profile,
+		Token:     *token,
+		Region:    *region,
+		DeviceArn: *deviceArn,
+		Duration:  *duration,
 	}
-	if *deviceArn == "" {
-		fmt.Println("MFA Device ARN required. Please go to your IAM user and copy.")
-		flag.Usage()
-		os.Exit(1)
-	}
-	app := cli.NewApp(*profile, *token, *region, *deviceArn)
+	inputArgs.ValidateFields()
+
+	app := cli.NewApp(inputArgs)
 	app.SetupUser()
 }
