@@ -6,6 +6,9 @@ import (
 	"github.com/mtchavez/aws-mfa-sts/cli"
 )
 
+const appName = "aws-mfa-sts"
+const appVer = "0.1.0"
+
 func main() {
 	profile := flag.String("profile", "default", "Profile name")
 	token := flag.String("token", "", "MFA token")
