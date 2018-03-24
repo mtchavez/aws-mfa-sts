@@ -7,6 +7,8 @@ require MFA.
 
 `go get github.com/mtchavez/aws-mfa-sts`
 
+or download from the [latest release][releases] files.
+
 ## Usage
 
 ### Command Flags
@@ -21,6 +23,8 @@ Usage of aws-mfa-sts:
         AWS Region (default "us-east-1")
   -token string
         MFA token
+  -Duration
+        Time in seconds the token is valid for (max 24 hours e.g. 86400)
 ```
 
 ### Generating a Token
@@ -32,7 +36,12 @@ Will show the following output if successful:
 ```
 Generating STS Token for default profile
 Adding credentials for default-sts to /path/to/.aws/credentials
-Use with --profile=default-sts or export AWS_DEFAULT_PROFILE=default-sts
+Use with --profile=default-sts
+
+or set up your environment with
+
+export AWS_DEFAULT_PROFILE=default-sts
+export AWS_PROFILE=default-sts
 ```
 
 ### Usage with AWS CLI
@@ -49,3 +58,5 @@ call things as normal `aws s3 ls`
 
 If you use the `-profile` command the generated STS profile will be prepended
 with the profile name e.g `api-user` will generate `api-user-sts`.
+
+[releases]: https://github.com/mtchavez/aws-mfa-sts/releases
