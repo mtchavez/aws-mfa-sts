@@ -23,7 +23,7 @@ Usage of aws-mfa-sts:
         AWS Region (default "us-east-1")
   -token string
         MFA token
-  -Duration
+  -duration
         Time in seconds the token is valid for (max 24 hours e.g. 86400)
 ```
 
